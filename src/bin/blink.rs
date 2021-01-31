@@ -35,7 +35,6 @@ fn main() -> ! {
     let die_temp_c = temp_sensor.measure().to_num();
     defmt::info!("die tempterature is : {:i32}", die_temp_c);
 
-
     loop {
         match button1.is_high().unwrap() {
             true => led1.set_high().unwrap(),
