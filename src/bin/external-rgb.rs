@@ -25,28 +25,28 @@ impl LEDColour {
     pub fn init<Mode>(led_red: Pin<Mode>, led_green: Pin<Mode>, led_blue: Pin<Mode>) -> LEDColour {
 
         LEDColour {
-            r: led_red.into_push_pull_output(Level::Low),
-            g: led_green.into_push_pull_output(Level::Low),
-            b: led_blue.into_push_pull_output(Level::Low),
+            r: led_red.into_push_pull_output(Level::High),
+            g: led_green.into_push_pull_output(Level::High),
+            b: led_blue.into_push_pull_output(Level::High),
         }
     }
 
     fn red(&mut self) {
-        self.r.set_high().unwrap();
-        self.g.set_low().unwrap();
-        self.b.set_low().unwrap();
+        self.r.set_low().unwrap();
+        self.g.set_high().unwrap();
+        self.b.set_high().unwrap();
     }
 
     fn green(&mut self) {
-        self.r.set_low().unwrap();
-        self.g.set_high().unwrap();
-        self.b.set_low().unwrap();
+        self.r.set_high().unwrap();
+        self.g.set_low().unwrap();
+        self.b.set_high().unwrap();
     }
 
     fn blue(&mut self) {
-        self.r.set_low().unwrap();
-        self.g.set_low().unwrap();
-        self.b.set_high().unwrap();
+        self.r.set_high().unwrap();
+        self.g.set_high().unwrap();
+        self.b.set_low().unwrap();
     }
 }
 
