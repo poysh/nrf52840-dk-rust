@@ -7,6 +7,11 @@ use nrf52840_hal as _; // memory layout
 
 use panic_probe as _;
 
+// export button module
+pub mod dk_button;
+pub mod rgb_led;
+pub mod number_representation;
+
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
 // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
 #[defmt::panic_handler]

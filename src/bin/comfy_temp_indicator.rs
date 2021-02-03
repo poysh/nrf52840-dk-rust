@@ -1,77 +1,31 @@
 #![no_main]
 #![no_std]
 
-use playground as _; // global logger + panicking-behavior + memory layout
+use playground::{self as _}; // global logger + panicking-behavior + memory layout
+use playground::{
+    dk_button, 
+    rgb_led,
+    number_representation::{self, Unit},
+}; 
+use nb::block;
+
+// access to board peripherals:
 use nrf52840_hal::{
     self as hal,
     prelude::*,
-    Timer,
-    Temp, 
-    gpio::{p0::Parts as P0Parts,         
-        Level, 
-        Output,
-        Input,
-        PullUp, 
-        PushPull,
-        Pin,
-}
+    Temp, Timer,
+    gpio::{p0::Parts as P0Parts},
 };
-use embedded_hal::{blocking::delay::DelayMs, digital::v2::OutputPin};
-
-struct LEDColour {
-    r: Pin<Output<PushPull>>,
-    g: Pin<Output<PushPull>>,
-    b: Pin<Output<PushPull>>,
-}
-
-impl LEDColour {
-
-    pub fn init<Mode>(led_red: Pin<Mode>, led_green: Pin<Mode>, led_blue: Pin<Mode>) -> LEDColour {
-
-        LEDColour {
-            r: led_red.into_push_pull_output(Level::High),
-            g: led_green.into_push_pull_output(Level::High),
-            b: led_blue.into_push_pull_output(Level::High),
-        }
-    }
-
-    fn red(&mut self) {
-        self.r.set_low().unwrap();
-        self.g.set_high().unwrap();
-        self.b.set_high().unwrap();
-    }
-
-    fn green(&mut self) {
-        self.r.set_high().unwrap();
-        self.g.set_low().unwrap();
-        self.b.set_high().unwrap();
-    }
-
-    fn blue(&mut self) {
-        self.r.set_high().unwrap();
-        self.g.set_high().unwrap();
-        self.b.set_low().unwrap();
-    }
-}
-
-pub struct Button(Pin<Input<PullUp>>);
-
-impl Button {
-    fn new<Mode>(pin: Pin<Mode>) -> Self {
-        Button(pin.into_pullup_input())
-    }
-
-    fn is_pressed(&self) -> bool {
-        self.0.is_low().unwrap()
-    }
-}
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
     defmt::info!("Hello, world!");
 
     let board = hal::pac::Peripherals::take().unwrap();
-    let mut timer = Timer::new(board.TIMER0);
+
+    // one for continuous counting
+    let mut periodic_timer = Timer::periodic(board.TIMER0);
+    let mut millis: u64 = 0;
 
     let pins = P0Parts::new(board.P0);
 
@@ -79,30 +33,62 @@ fn main() -> ! {
     let led_channel_green = pins.p0_14.degrade(); //onboard
     let led_channel_blue = pins.p0_15.degrade(); //onboard
 
-    let mut light = LEDColour::init(led_channel_red, led_channel_green, led_channel_blue);
+    let mut light = rgb_led::LEDColour::init(led_channel_red, led_channel_green, led_channel_blue);
     let mut temp_sensor = Temp::new(board.TEMP);
-    let button_1 = Button::new(pins.p0_11.degrade());
+    let mut button_1 = dk_button::Button::new(pins.p0_11.degrade());
 
     let lower_limit: f32 = 22.0;
     let upper_limit: f32 = 25.0;
 
+    // state of the button is read and updated continuoulsly
+    // but temp value is only printed if tick number is divisible
+
+    let mut current_unit = number_representation::Unit::Celsius;
+
     loop {
-        if button_1.is_pressed() {
+        // Start by setting/resetting the timer for next interval
+        // Timer counts in microseconds/at 1MHz, we care about milliseconds.
+        periodic_timer.start(1000u32);
+
+        // Every 1000ms:
+        // read temperature
+        // light led in appropriate color
+        // print the current temperature reading
+
+        if (millis % 1000) == 0 {
+            defmt::info!("Tick (milliseconds): {:u32}", millis as u32);
+
             let temperature: f32 = temp_sensor.measure().to_num();
+
             if temperature > lower_limit && temperature < upper_limit {
                 light.green();
-                defmt::info!("comfy! {:?}", temperature);
             } else if temperature <= lower_limit {
                 light.blue();
-                defmt::info!("cold! {:?}", temperature);
             } else {
                 light.red();
-                defmt::info!("hot! {:?}", temperature);
             }
-            timer.delay_ms(1000u32);
-        }
-        
-    }
 
-    // playground::exit()
+            let converted_temp = current_unit.convert_temperature(&temperature);
+            match current_unit {
+                Unit::Fahrenheit => defmt::info!("{:f32} °F", converted_temp),
+                Unit::Kelvin => defmt::info!("{:f32} K", converted_temp),
+                Unit::Celsius => defmt::info!("{:f32} °C", converted_temp),
+            };
+        };
+
+        // Every 5ms, check the current state of the button
+        if (millis % 5) == 0 && button_1.check_rising_edge() {
+            current_unit = match current_unit {
+                Unit::Fahrenheit => Unit::Kelvin,
+                Unit::Kelvin => Unit::Celsius,
+                Unit::Celsius => Unit::Fahrenheit,
+            };
+        };
+
+        // Now wait for the timer to complete
+        block!(periodic_timer.wait()).unwrap();
+
+        // Increment our millisecond count
+        millis = millis.wrapping_add(1);
+    }
 }

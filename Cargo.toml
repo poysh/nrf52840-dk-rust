@@ -15,6 +15,8 @@ defmt-rtt = "0.1.0"
 panic-probe = { version = "0.1.0", features = ["print-defmt"] }
 nrf52840-hal = { version = "0.12.0", features = ["rt"] }
 embedded-hal = "0.2.4"
+nb = "1.0.0"
+
 [features]
 # set logging levels here
 default = [
