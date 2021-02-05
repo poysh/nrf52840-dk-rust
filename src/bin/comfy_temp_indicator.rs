@@ -29,9 +29,9 @@ fn main() -> ! {
 
     let pins = P0Parts::new(board.P0);
 
-    let led_channel_red = pins.p0_13.degrade(); //onboard
-    let led_channel_green = pins.p0_14.degrade(); //onboard
-    let led_channel_blue = pins.p0_15.degrade(); //onboard
+    let led_channel_red = pins.p0_03.degrade(); //onboard
+    let led_channel_green = pins.p0_04.degrade(); //onboard
+    let led_channel_blue = pins.p0_28.degrade(); //onboard
 
     let mut light = rgb_led::LEDColour::init(led_channel_red, led_channel_green, led_channel_blue);
     let mut temp_sensor = Temp::new(board.TEMP);
@@ -60,9 +60,9 @@ fn main() -> ! {
 
             let temperature: f32 = temp_sensor.measure().to_num();
 
-            if temperature > lower_limit && temperature < upper_limit {
+            if temperature >= lower_limit && temperature <= upper_limit {
                 light.green();
-            } else if temperature <= lower_limit {
+            } else if temperature < lower_limit {
                 light.blue();
             } else {
                 light.red();

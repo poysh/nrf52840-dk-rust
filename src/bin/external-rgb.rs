@@ -59,9 +59,9 @@ fn main() -> ! {
 
     let pins = nrf52840_hal::gpio::p0::Parts::new(board.P0);
 
-    let led_channel_red = pins.p0_13.degrade(); //onboard
-    let led_channel_green = pins.p0_14.degrade(); //onboard
-    let led_channel_blue = pins.p0_15.degrade(); //onboard
+    let led_channel_red = pins.p0_03.degrade(); //onboard
+    let led_channel_green = pins.p0_04.degrade(); //onboard
+    let led_channel_blue = pins.p0_28.degrade(); //onboard
 
     let mut light = LEDColour::init(led_channel_red, led_channel_green, led_channel_blue);
 
