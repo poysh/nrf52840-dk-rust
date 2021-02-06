@@ -1,6 +1,4 @@
-
 use nrf52840_hal::gpio::{Level, Output, Pin, PushPull};
-
 use embedded_hal::digital::v2::OutputPin;
 pub struct LEDColour {
     r: Pin<Output<PushPull>>,
