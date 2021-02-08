@@ -1,6 +1,7 @@
 #![no_main]
 #![no_std]
 
+use BinaryColor::On;
 use playground as _; // global logger + panicking-behavior + memory layout
 // access to board peripherals:
 use nrf52840_hal::{
@@ -11,18 +12,12 @@ use nrf52840_hal::{
     Timer,
 };
 use epd_waveshare::{
-    epd2in9::*,
+    epd2in9bc::*,
     graphics::Display,
     prelude::*,
 };
 
-use embedded_graphics::{
-    geometry::Point,
-    pixelcolor::BinaryColor,
-    prelude::*,
-    primitives::{ Circle, Triangle},
-    style::PrimitiveStyle,
-};
+use embedded_graphics::{geometry::Point, pixelcolor::BinaryColor, prelude::*, primitives::{Circle, Line, Triangle}, style::PrimitiveStyle};
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
@@ -47,9 +42,13 @@ fn main() -> ! {
     let mut spi = Spim::new(board.SPIM3, spi_pins, spim::Frequency::K500, spim::MODE_0, 0);
 
     let mut delay  = Timer::new(board.TIMER1);
-    let mut epd2in9 = EPD2in9::new(&mut spi, cs, busy, dc, rst, &mut delay).unwrap();
+    let mut epd2in9 = EPD2in9bc::new(&mut spi, cs, busy, dc, rst, &mut delay).unwrap();
 
-    let mut display = Display2in9::default();
+    let mut display = Display2in9bc::default();
+
+    let _ = Line::new(Point::new(0, 120), Point::new(0, 200))
+        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
+        .draw(&mut display);
 
     let c1 = Circle::new(Point::new(30, 30), 30)
         .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
