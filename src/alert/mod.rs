@@ -9,7 +9,8 @@ pub fn check_level(
     co2: &f32,
     buzzer: &mut Buzzer,
     led: &mut LEDColour,
-    mut timer: &mut Timer<TIMER0, OneShot>, 
+    mut timer: &mut Timer<TIMER0, OneShot>,
+    alert: &mut bool,
 ) {
     if *co2 < WARN_LIMIT {
         led.green();
@@ -17,6 +18,10 @@ pub fn check_level(
         led.yellow();
     } else {
         led.red();
-        buzzer.noise(&mut timer)
+        if *alert == false {
+            buzzer.noise(&mut timer);
+            *alert = true;
+        }
+
     }
 }

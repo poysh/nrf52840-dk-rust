@@ -65,6 +65,7 @@ fn main() -> ! {
 
     // start continuous measurement
     sensor.start_continuous_measurement(pressure).unwrap();
+    let mut send_alert = false;
 
     loop {
         led_1.set_high().unwrap();
@@ -80,12 +81,12 @@ fn main() -> ! {
             let temperature = result.temperature;
             let humidity = result.humidity;
 
-            alert::check_level(&co2, &mut buzzer, &mut rgb_led, &mut timer);
+            alert::check_level(&co2, &mut buzzer, &mut rgb_led, &mut timer, &mut send_alert);
 
             defmt::info!("
-                CO2 {:f32} ppm
-                Temperature {:f32} C
-                Humidity {:f32} %
+                CO2: {:f32} ppm
+                Temperature: {:f32} C
+                Humidity: {:f32} %
                 ", co2, temperature, humidity
             );
         }
